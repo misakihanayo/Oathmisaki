@@ -66,7 +66,7 @@ class Locallist(object):
             if (number<4):
                 self.sendtime[str_queryid]=(number+1,time.time())
                 print("Timeout:",number)
-                threading.Thread(target=self.timer,args=(name,queryid,3,(self.sendtime[str_queryid])[1],)).start()
+                threading.Thread(target=self.timer,args=(name,queryid,number+1,(self.sendtime[str_queryid])[1],)).start()
                 threading.Thread(target=self.ExternQuery,args=(name,queryid,number+1)).start()
             else:
                 self.buffer.pop(str_queryid)
@@ -109,19 +109,19 @@ class Locallist(object):
         else:
             return (0,'')
 
-    def PackProcess_Local(self):
+    def PackProcess_Local(self): #read query from queue
         while (1):
             if not self.input.empty():
                 curpack=self.input.get()
                 msgtype=curpack[0]
                 addr=curpack[1]
-                if msgtype[3]==131 and msgtype[5]==1 and msgtype[7]==0 :
+                if not(msgtype[3]==131) and msgtype[5]==1 and msgtype[7]==0 :
                     queryid=chr(msgtype[0])+chr(msgtype[1])
                     queryname=''
                     i=12
                     while (msgtype[i]!=0):
                         i2=i+1+msgtype[i]
-                        queryname=queryname+msgtype[i+1:32].decode(encoding='iso8859')+'.'
+                        queryname=queryname+msgtype[i+1:i2].decode(encoding='iso8859')+'.'
                         i=i2
                     queryname=queryname[0:len(queryname)-1]
                     print('current query is')
@@ -146,7 +146,6 @@ class Locallist(object):
             if (not self.output.empty()):
                 curpack=self.output.get()
                 curmsg=curpack[0]
-                print(curmsg)
                 if (curmsg[7]>=1):
                     a_id=curmsg[0]
                     a_number=curmsg[1]
@@ -164,8 +163,9 @@ class Locallist(object):
                                 i=i2
                             r_name=r_name[0:len(r_name)-1]
                             self.dic[r_name]=ip
+                            print("r_name is, ",r_name)
                             back=self.buffer[str_a_id]
-                            back_id=back[0]
+                            back_id=str(back[0])
                             back_addr=back[1]
                             msgback=back_id+curmsg[2:].decode(encoding='iso8859')
                             b_msgback=bytes(msgback, encoding = "iso8859")
